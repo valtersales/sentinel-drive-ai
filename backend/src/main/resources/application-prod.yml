@@ -1,0 +1,10 @@
+# Production profile
+spring:
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+logging:
+  level:
+    com.sentineldrive: INFO

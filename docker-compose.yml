@@ -1,0 +1,63 @@
+# Sentinel Drive AI - Phase 1: Base structure and infrastructure
+# Orchestrates AI microservice, Backend, and PostgreSQL.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentinel-drive-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sentineldrive}
+      POSTGRES_USER: ${POSTGRES_USER:-sentineldrive}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentineldrive}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sentineldrive} -d ${POSTGRES_DB:-sentineldrive}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentinel-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sentinel-drive-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sentineldrive}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sentineldrive}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-sentineldrive}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8080
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sentinel-net
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: sentinel-drive-ai
+    environment:
+      BACKEND_URL: http://backend:8080
+      PORT: 8000
+    ports:
+      - "${AI_SERVICE_PORT:-8000}:8000"
+    depends_on:
+      - backend
+    networks:
+      - sentinel-net
+
+volumes:
+  postgres_data:
+
+networks:
+  sentinel-net:
+    driver: bridge

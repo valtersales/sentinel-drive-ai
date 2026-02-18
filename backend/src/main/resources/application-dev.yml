@@ -1,0 +1,11 @@
+# Development profile
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    com.sentineldrive: DEBUG
+    org.hibernate.SQL: DEBUG

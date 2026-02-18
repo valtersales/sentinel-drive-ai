@@ -1,0 +1,29 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.venv
+venv
+.vscode/
+.idea/
+*.iml
+
+# Build
+backend/target/
+*.class
+*.jar
+*.war
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db

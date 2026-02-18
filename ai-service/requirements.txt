@@ -1,0 +1,4 @@
+# Sentinel Drive AI - Python dependencies (Phase 1 minimal)
+# Full CV stack (OpenCV, MediaPipe, NumPy) will be added in Phase 2
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0

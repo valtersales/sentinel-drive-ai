@@ -8,6 +8,24 @@ This project demonstrates the integration of applied artificial intelligence wit
 
 ---
 
+## 🏃 Quick Start (Docker)
+
+From the project root:
+
+```bash
+docker-compose up --build
+```
+
+Or use the Makefile: `make up` to start, `make down` to stop, `make prune` or `make prune-all` to stop and remove volumes. For the backend: `make build`, `make test`, `make clean`.
+
+This starts PostgreSQL, the Spring Boot backend, and the Python AI microservice. Optional: copy `.env.example` to `.env` to override ports or credentials.
+
+- **AI service:** http://localhost:8000 (e.g. `GET /health`)
+- **Backend:** http://localhost:8080 (e.g. `GET /actuator/health`)
+- **PostgreSQL:** `localhost:5432` (default user/db: `sentineldrive`)
+
+---
+
 ## 🚀 Core Capabilities
 
 - Real-time facial landmark detection (MediaPipe)
@@ -78,3 +96,8 @@ The system is containerized using Docker and designed for scalability and produc
 The goal of this project is to demonstrate how real-time AI processing can be integrated into a distributed architecture suitable for safety-critical applications.
 
 Sentinel Drive AI is intended for educational, research, and portfolio purposes and simulates automated safety responses in controlled environments.
+
+---
+
+_Sentinel Drive AI_ — distributed driver drowsiness detection platform.  
+**Author:** Valter Sales · **Date:** 2025-02-18 · **Last Update:** 2025-02-18
