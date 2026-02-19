@@ -2,6 +2,8 @@
 
 Checklist to guide project implementation, in the suggested order of execution.
 
+**Resuming the project:** See **README.md** → “Project status and next steps” for a short summary of what is done and the end-to-end flow. For a full project description (EAR/MAR/tilt math, parameters, backend objectives), see **PROJECT_OVERVIEW.md**. Then use the unchecked items below; suggested focus: backend Section 3.3 (list risk events, sessions, analytics), then 3.4 (Security), then 5–6.
+
 ---
 
 ## 1. Base Structure and Infrastructure
@@ -19,35 +21,35 @@ Checklist to guide project implementation, in the suggested order of execution.
 
 ### 2.1 Environment and Dependencies
 
-- [ ] Create `requirements.txt` (OpenCV, MediaPipe, NumPy, FastAPI, uvicorn)
-- [ ] Set up virtual environment and add instructions to README
-- [ ] Expose health check endpoint (e.g. `GET /health`)
+- [x] Create `requirements.txt` (OpenCV, MediaPipe, NumPy, FastAPI, uvicorn)
+- [x] Set up virtual environment and add instructions to README
+- [x] Expose health check endpoint (e.g. `GET /health`)
 
 ### 2.2 Computer Vision
 
-- [ ] Integrate video capture (live camera or stream)
-- [ ] Integrate MediaPipe Face Mesh for facial landmarks
-- [ ] Implement **EAR (Eye Aspect Ratio)** calculation for eye-closure detection
-- [ ] Define threshold and time window for “prolonged blink”
-- [ ] Implement **MAR (Mouth Aspect Ratio)** calculation for yawn detection
-- [ ] Implement **head pose** estimation (tilt/rotation)
-- [ ] Handle frames with no face detected (fallback/timeout)
+- [x] Integrate video capture (live camera or stream)
+- [x] Integrate MediaPipe Face Mesh for facial landmarks
+- [x] Implement **EAR (Eye Aspect Ratio)** calculation for eye-closure detection
+- [x] Define threshold and time window for “prolonged blink”
+- [x] Implement **MAR (Mouth Aspect Ratio)** calculation for yawn detection
+- [x] Implement **head pose** estimation (tilt/rotation)
+- [x] Handle frames with no face detected (fallback/timeout)
 
 ### 2.3 Risk Engine
 
-- [ ] Define “risk event” data model (level, type, timestamp, metrics)
-- [ ] Implement **risk-level scoring** based on EAR, MAR, and head pose
-- [ ] Define risk levels (e.g. low, medium, high, critical)
-- [ ] Implement **audio alerts** (e.g. beep when threshold is exceeded)
-- [ ] Implement **visual alerts** (e.g. overlay on frame or UI notification)
+- [x] Define “risk event” data model (level, type, timestamp, metrics)
+- [x] Implement **risk-level scoring** based on EAR, MAR, and head pose
+- [x] Define risk levels (e.g. low, medium, high, critical)
+- [x] Implement **audio alerts** (e.g. beep when threshold is exceeded)
+- [x] Implement **visual alerts** (e.g. overlay on frame or UI notification)
 
 ### 2.4 API and Communication
 
-- [ ] Expose REST endpoint to send risk events to the backend (or gRPC)
-- [ ] Document event contract (payload, required fields)
-- [ ] Configure backend URL via environment variable
-- [ ] Handle retry/backoff when communication with backend fails
-- [ ] (Optional) Document AI service API with OpenAPI/Swagger
+- [x] Expose REST endpoint to send risk events to the backend (or gRPC)
+- [x] Document event contract (payload, required fields)
+- [x] Configure backend URL via environment variable
+- [x] Handle retry/backoff when communication with backend fails
+- [x] (Optional) Document AI service API with OpenAPI/Swagger
 
 ---
 
@@ -55,20 +57,22 @@ Checklist to guide project implementation, in the suggested order of execution.
 
 ### 3.1 Base Project
 
-- [ ] Create Spring Boot project (Java 21)
-- [ ] Configure dependencies: Spring Data JPA, Spring Security, Spring Web, PostgreSQL driver
-- [ ] Configure `application.yml`/`.properties` (profiles: dev, prod)
-- [ ] Connect to PostgreSQL (local and via Docker)
-- [ ] Expose health check (e.g. Actuator `/actuator/health`)
+- [x] Create Spring Boot project (Java 21)
+- [x] Configure dependencies: Spring Data JPA, Spring Web, PostgreSQL driver, validation
+- [ ] Configure **Spring Security** (see 3.4)
+- [x] Configure `application.yml`/`.properties` (profiles: dev, prod)
+- [x] Connect to PostgreSQL (local and via Docker)
+- [x] Expose health check (e.g. Actuator `/actuator/health`)
 
 ### 3.2 Data Model and Persistence
 
-- [ ] Define **Risk Event** entity (level, type, timestamp, session_id, metrics, etc.)
+- [x] Define **Risk Event** entity (level, type, timestamp, session_id, metrics, etc.)
 - [ ] Define **Session** entity (driver/usage session)
-- [ ] Create JPA repositories for Risk Event and Session
-- [ ] Create migrations (Flyway/Liquibase) for initial schema
-- [ ] Implement **event ingestion** (endpoint or consumer that receives events from AI service)
-- [ ] Validate payload and persist events to PostgreSQL
+- [x] Create JPA repository for Risk Event
+- [ ] Create JPA repository for Session
+- [ ] Create migrations (Flyway/Liquibase) for initial schema (currently using JPA `ddl-auto`)
+- [x] Implement **event ingestion** (`POST /api/v1/risk-events` receives events from AI service)
+- [x] Validate payload and persist events to PostgreSQL
 
 ### 3.3 REST API
 
@@ -89,20 +93,29 @@ Checklist to guide project implementation, in the suggested order of execution.
 
 ## 4. Service Integration
 
-- [ ] AI service sends risk events to the backend in real time
-- [ ] Backend validates and persists events; returns appropriate status
-- [ ] Handle scenario when backend is unavailable (retry, queue, or local log)
+- [x] AI service sends risk events to the backend in real time
+- [x] Backend validates and persists events; returns appropriate status (201 Created)
+- [x] Handle scenario when backend is unavailable (retry/backoff in AI service)
 - [ ] Document end-to-end flow (diagram or description in README)
-- [ ] Test full flow: video → detection → event → persistence → query via API
+- [x] Test full flow: video → detection → event → persistence (query API not yet implemented)
 
 ---
 
 ## 5. User Experience and Documentation
 
-- [ ] Local run instructions (prerequisites, env vars, commands) in README
-- [ ] API call examples (curl or Postman)
-- [ ] (Optional) Minimal UI to view alerts or history (e.g. static page or SPA)
-- [ ] State clearly in README that the project is educational/portfolio and for controlled environments
+- [x] Local run instructions (prerequisites, env vars, commands) in README
+- [ ] API call examples (curl or Postman) for risk-events and future list/analytics endpoints
+- [x] State clearly in README that the project is educational/portfolio and for controlled environments
+
+- [x] **PROJECT_OVERVIEW.md** — full project description in English (EAR/MAR/tilt formulas, parameters, risk engine, backend objectives; base for articles/LinkedIn).
+
+### 5.1 Live dashboard (browser) — webcam + metrics and alerts on screen
+
+- [x] **Stream from AI service:** Expose a live video stream from the pipeline (e.g. **MJPEG** at `GET /api/v1/stream`, or **WebSocket** pushing frame + metadata). Reuse existing frame buffer or pipeline loop; optionally draw overlay (EAR/MAR/alert) on each frame before streaming.
+- [x] **Dashboard page:** Provide a static page (e.g. `/dashboard` or `/` from the AI service) that embeds the stream (`<img src="...">` for MJPEG, or WebSocket + canvas/img for WebSocket) and shows metrics and alerts in dedicated areas (sidebar, cards, or overlay).
+- [x] **Layout:** Organize on-screen elements: video feed prominent; EAR, MAR, head pose, risk level and last alert text clearly visible and updated in real time.
+- [x] Document in README how to open the dashboard (URL and prerequisites: pipeline must be started).
+- [x] **Status consistency and UX:** Same status text and colors (green “It’s all good” / red alert with 5s cooldown) on the frame overlay (OpenCV), HTML bar over video, and sidebar; repeating audible alert until OK; Start/Stop pipeline via JS without navigating away.
 
 ---
 

@@ -1,0 +1,5 @@
+# Dependencies for scripts/md2pdf.py (Markdown to PDF)
+# Install: pip install -r scripts/requirements-md2pdf.txt
+
+markdown>=3.5.0
+weasyprint>=60.0

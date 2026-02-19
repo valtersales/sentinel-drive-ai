@@ -30,6 +30,9 @@ up:
 down:
 	docker-compose down
 
+backend-up:
+	docker-compose build backend && docker-compose up -d backend postgres
+
 prune: down
 	docker-compose down -v
 	docker image prune -f
@@ -41,3 +44,6 @@ prune-all: down
 	docker volume prune -f
 	docker network prune -f
 	docker system prune -f
+
+ai-service-local-up:
+	cd ai-service && source .venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

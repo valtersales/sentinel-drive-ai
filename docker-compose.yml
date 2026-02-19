@@ -46,8 +46,15 @@ services:
       dockerfile: Dockerfile
     container_name: sentinel-drive-ai
     environment:
-      BACKEND_URL: http://backend:8080
-      PORT: 8000
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
+      PORT: ${AI_SERVICE_PORT:-8000}
+      VIDEO_SOURCE: ${VIDEO_SOURCE:-0}
+      EAR_THRESHOLD: ${EAR_THRESHOLD:-0.2}
+      EAR_CLOSURE_SECONDS: ${EAR_CLOSURE_SECONDS:-0.5}
+      MAR_THRESHOLD: ${MAR_THRESHOLD:-0.5}
+      HEAD_POSE_TILT_THRESHOLD_DEG: ${HEAD_POSE_TILT_THRESHOLD_DEG:-25.0}
+      BACKEND_RETRY_MAX: ${BACKEND_RETRY_MAX:-5}
+      BACKEND_RETRY_BACKOFF_SEC: ${BACKEND_RETRY_BACKOFF_SEC:-1.0}
     ports:
       - "${AI_SERVICE_PORT:-8000}:8000"
     depends_on:

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel Drive AI — Live Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4f;
+      --text: #e6edf3;
+      --muted: #8b9cb3;
+      --accent: #58a6ff;
+      --alert: #f85149;
+      --ok: #3fb950;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+    .pipeline-actions a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .pipeline-actions a:hover { text-decoration: underline; }
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 0;
+      min-height: 0;
+    }
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    }
+    .video-wrap {
+      position: relative;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      background: #000;
+    }
+    .video-overlay {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      right: 1rem;
+      text-align: center;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 1rem;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    .video-overlay.alert { background: rgba(248, 81, 73, 0.9); color: #fff; }
+    .video-overlay.ok { background: rgba(63, 185, 80, 0.9); color: #fff; }
+    .video-overlay.empty { background: rgba(0, 0, 0, 0.5); color: var(--muted); }
+    .video-wrap img {
+      max-width: 100%;
+      max-height: calc(100vh - 180px);
+      object-fit: contain;
+      background: #000;
+    }
+    .video-wrap .no-stream {
+      color: var(--muted);
+      text-align: center;
+      padding: 2rem;
+    }
+    .video-wrap .no-stream a {
+      color: var(--accent);
+    }
+    .sidebar {
+      border-left: 1px solid var(--border);
+      padding: 1.25rem;
+      overflow-y: auto;
+      background: var(--surface);
+    }
+    @media (max-width: 900px) { .sidebar { border-left: none; border-top: 1px solid var(--border); } }
+    .sidebar h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0 0 1rem 0;
+    }
+    .metric {
+      margin-bottom: 1.25rem;
+    }
+    .metric label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .metric .value {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .metric .value.none { color: var(--muted); }
+    .alert-box {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: rgba(248, 81, 73, 0.08);
+      border-color: var(--alert);
+    }
+    .alert-box .label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .alert-box .text { font-weight: 600; color: var(--alert); }
+    .alert-box.empty { background: var(--surface); border-color: var(--border); }
+    .alert-box.empty .text { color: var(--muted); font-weight: 400; }
+    .alert-box.ok { background: rgba(63, 185, 80, 0.12); border-color: var(--ok); }
+    .alert-box.ok .text { color: var(--ok); font-weight: 600; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .status-dot.running { background: var(--ok); }
+    .status-dot.error { background: var(--alert); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sentinel Drive AI — Live Dashboard</h1>
+    <div class="pipeline-actions">
+      <a href="#" id="btn-start-pipeline">Start pipeline</a>
+      &nbsp;·&nbsp;
+      <a href="#" id="btn-stop-pipeline">Stop pipeline</a>
+      &nbsp;·&nbsp;
+      <a href="/docs">API docs</a>
+    </div>
+  </header>
+  <div class="main">
+    <div class="video-wrap">
+      <img id="stream" src="/api/v1/stream" alt="Live stream" style="display: none;" />
+      <div id="video-overlay" class="video-overlay empty" style="display: none;">—</div>
+      <div id="no-stream" class="no-stream">
+        Start the pipeline to see the live stream.<br>
+        <a href="#" id="btn-start-pipeline-no-stream">Start pipeline</a>
+      </div>
+    </div>
+    <aside class="sidebar">
+      <div class="status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">—</span>
+      </div>
+      <h2>Metrics</h2>
+      <div class="metric">
+        <label>EAR (Eye Aspect Ratio)</label>
+        <span class="value" id="ear">—</span>
+      </div>
+      <div class="metric">
+        <label>MAR (Mouth Aspect Ratio)</label>
+        <span class="value" id="mar">—</span>
+      </div>
+      <div class="metric">
+        <label>Head pose (tilt °)</label>
+        <span class="value" id="tilt">—</span>
+      </div>
+      <div class="metric">
+        <label>Frames</label>
+        <span class="value" id="frames">—</span>
+      </div>
+      <h2>Alert</h2>
+      <div class="alert-box empty" id="alert-box">
+        <div class="label">Last alert</div>
+        <div class="text" id="alert-text">None</div>
+      </div>
+      <div id="error-msg" style="margin-top: 1rem; color: var(--alert); font-size: 0.9rem; display: none;"></div>
+    </aside>
+  </div>
+  <script>
+    const streamImg = document.getElementById('stream');
+    const noStream = document.getElementById('no-stream');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const earEl = document.getElementById('ear');
+    const marEl = document.getElementById('mar');
+    const tiltEl = document.getElementById('tilt');
+    const framesEl = document.getElementById('frames');
+    const alertBox = document.getElementById('alert-box');
+    const alertText = document.getElementById('alert-text');
+    const errorMsg = document.getElementById('error-msg');
+    const videoOverlay = document.getElementById('video-overlay');
+
+    function pipelineStart(e) {
+      if (e) e.preventDefault();
+      fetch('/api/v1/pipeline/start', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function() { updateMetrics(); });
+    }
+    function pipelineStop(e) {
+      if (e) e.preventDefault();
+      fetch('/api/v1/pipeline/stop', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function() { updateMetrics(); });
+    }
+    document.getElementById('btn-start-pipeline').addEventListener('click', pipelineStart);
+    document.getElementById('btn-stop-pipeline').addEventListener('click', pipelineStop);
+    document.getElementById('btn-start-pipeline-no-stream').addEventListener('click', pipelineStart);
+
+    var previousShowAlertRed = false;
+    var alertSoundInterval = null;
+    var audioCtx = null;
+    function unlockAudio() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {}
+    }
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+
+    function playOneAlertPattern() {
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        var ctx = audioCtx;
+        var t0 = ctx.currentTime;
+        var playBeep = function(delay, freq) {
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq || 880;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.35, t0 + delay);
+          gain.gain.exponentialRampToValueAtTime(0.01, t0 + delay + 0.12);
+          osc.start(t0 + delay);
+          osc.stop(t0 + delay + 0.12);
+        };
+        playBeep(0, 880);
+        playBeep(0.18, 880);
+        playBeep(0.36, 880);
+      } catch (e) {}
+    }
+    function startAlertSoundLoop() {
+      if (alertSoundInterval) return;
+      playOneAlertPattern();
+      alertSoundInterval = setInterval(playOneAlertPattern, 1600);
+    }
+    function stopAlertSoundLoop() {
+      if (alertSoundInterval) {
+        clearInterval(alertSoundInterval);
+        alertSoundInterval = null;
+      }
+    }
+
+    function setMetric(el, value, noneLabel = '—') {
+      if (value == null || value === '') {
+        el.textContent = noneLabel;
+        el.classList.add('none');
+      } else {
+        el.textContent = value;
+        el.classList.remove('none');
+      }
+    }
+
+    function updateMetrics() {
+      fetch('/api/v1/metrics')
+        .then(r => r.json())
+        .then(data => {
+          errorMsg.style.display = 'none';
+          if (data.pipeline_running) {
+            statusDot.className = 'status-dot running';
+            statusText.textContent = 'Pipeline running';
+            streamImg.style.display = '';
+            noStream.style.display = 'none';
+          } else {
+            statusDot.className = 'status-dot';
+            statusText.textContent = 'Pipeline stopped';
+            streamImg.style.display = 'none';
+            noStream.style.display = 'block';
+          }
+          if (data.error) {
+            statusDot.className = 'status-dot error';
+            statusText.textContent = 'Error';
+            errorMsg.textContent = data.error;
+            errorMsg.style.display = 'block';
+          }
+          const m = data.metrics || {};
+          setMetric(earEl, m.ear != null ? m.ear.toFixed(3) : null);
+          setMetric(marEl, m.mar != null ? m.mar.toFixed(3) : null);
+          const tilt = m.head_pose && m.head_pose.tilt_deg != null ? m.head_pose.tilt_deg.toFixed(1) + '°' : null;
+          setMetric(tiltEl, tilt);
+          setMetric(framesEl, data.frame_count != null ? String(data.frame_count) : null);
+          var alertAgeSec = (data.last_alert_at != null) ? (Date.now() / 1000 - data.last_alert_at) : 999;
+          var showAlertRed = data.last_alert && alertAgeSec <= 5;
+          var showOkGreen = data.pipeline_running && !showAlertRed;
+          if (showAlertRed) startAlertSoundLoop();
+          else stopAlertSoundLoop();
+          previousShowAlertRed = showAlertRed;
+          if (showAlertRed) {
+            alertBox.classList.remove('empty', 'ok');
+            alertText.textContent = data.last_alert;
+          } else if (showOkGreen) {
+            alertBox.classList.remove('empty');
+            alertBox.classList.add('ok');
+            alertText.textContent = 'It\'s all good';
+          } else {
+            alertBox.classList.remove('ok');
+            alertBox.classList.add('empty');
+            alertText.textContent = '—';
+          }
+          if (data.pipeline_running) {
+            videoOverlay.style.display = '';
+            videoOverlay.classList.remove('empty', 'ok', 'alert');
+            if (showAlertRed) {
+              videoOverlay.classList.add('alert');
+              videoOverlay.textContent = data.last_alert;
+            } else if (showOkGreen) {
+              videoOverlay.classList.add('ok');
+              videoOverlay.textContent = 'It\'s all good';
+            } else {
+              videoOverlay.classList.add('empty');
+              videoOverlay.textContent = '—';
+            }
+          } else {
+            videoOverlay.style.display = 'none';
+          }
+        })
+        .catch(() => {
+          statusDot.className = 'status-dot error';
+          statusText.textContent = 'Offline';
+        });
+    }
+
+    streamImg.onerror = function() {
+      streamImg.style.display = 'none';
+      noStream.style.display = 'block';
+    };
+    streamImg.onload = function() {
+      streamImg.style.display = '';
+      noStream.style.display = 'none';
+    };
+
+    updateMetrics();
+    setInterval(updateMetrics, 400);
+  </script>
+</body>
+</html>
